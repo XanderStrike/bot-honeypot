@@ -6,6 +6,12 @@ import (
 )
 
 func main() {
+    // Handle robots.txt specifically
+    http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "text/plain")
+        http.ServeFile(w, r, "robots.txt")
+    })
+
     // Serve static files from the current directory
     fs := http.FileServer(http.Dir("."))
     http.Handle("/", fs)
