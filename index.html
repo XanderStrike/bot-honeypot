@@ -12,11 +12,29 @@
             height: 1px;
             overflow: hidden;
         }
+        .visitor-list {
+            margin-top: 2em;
+            border-top: 1px solid #ccc;
+            padding-top: 1em;
+        }
+        .visitor {
+            margin-bottom: 0.5em;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
     <h1>Welcome to the Main Page</h1>
     <p>This is a visible content.</p>
     <a href="/secret-page" class="hidden-link">Hidden Link</a>
+
+    <div class="visitor-list">
+        <h2>Recent Secret Page Visitors</h2>
+        {{range .Visitors}}
+        <div class="visitor">
+            [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}}, User-Agent: {{.UserAgent}}
+        </div>
+        {{end}}
+    </div>
 </body>
 </html>
