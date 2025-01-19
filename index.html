@@ -24,12 +24,13 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to the Main Page</h1>
-    <p>This is a visible content.</p>
+    <h1>Bot Trap</h1>
+    <p>This page contains a hidden link that only web scrapers and bots would find. It's explicitly marked as off-limits in robots.txt, which any well-behaved bot should respect. But some bots just can't help themselves...</p>
     <a href="/secret-page" class="hidden-link">Hidden Link</a>
 
     <div class="visitor-list">
-        <h2>Recent Secret Page Visitors</h2>
+        <h2>🤖 Hall of Shame 🤖</h2>
+        <p>These visitors ignored robots.txt and found our hidden link. Naughty naughty!</p>
         {{range .Visitors}}
         <div class="visitor">
             [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}}, User-Agent: {{.UserAgent}}

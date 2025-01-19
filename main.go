@@ -68,7 +68,7 @@ func main() {
     // Handle secret page
     http.HandleFunc("/secret-page", func(w http.ResponseWriter, r *http.Request) {
         visitorLog.Add(r)
-        fmt.Fprintf(w, "Welcome to the secret page!")
+        fmt.Fprintf(w, "🚫 Gotcha! 🚫\n\nThis page was explicitly marked as off-limits in robots.txt.\nYour IP and User-Agent have been logged for posterity.\nMaybe try respecting robots.txt next time? 😉")
     })
 
     // Handle index page
