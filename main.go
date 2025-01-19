@@ -13,6 +13,8 @@ type Visitor struct {
     IP        string
     UserAgent string
     Timestamp time.Time
+    Path      string    // Add path to track what they tried to access
+    Type      string    // "secret" or "404"
 }
 
 type VisitorLog struct {
@@ -28,7 +30,7 @@ func NewVisitorLog(size int) *VisitorLog {
     }
 }
 
-func (vl *VisitorLog) Add(r *http.Request) {
+func (vl *VisitorLog) Add(r *http.Request, visitorType string) {
     vl.mu.Lock()
     defer vl.mu.Unlock()
 
@@ -36,6 +38,8 @@ func (vl *VisitorLog) Add(r *http.Request) {
         IP:        r.RemoteAddr,
         UserAgent: r.UserAgent(),
         Timestamp: time.Now(),
+        Path:      r.URL.Path,
+        Type:      visitorType,
     }
     vl.current = (vl.current + 1) % len(vl.visitors)
 }
@@ -67,13 +71,22 @@ func main() {
 
     // Handle secret page
     http.HandleFunc("/secret-page", func(w http.ResponseWriter, r *http.Request) {
-        visitorLog.Add(r)
+        visitorLog.Add(r, "secret")
         fmt.Fprintf(w, "🚫 Gotcha! 🚫\n\nThis page was explicitly marked as off-limits in robots.txt.\nYour IP and User-Agent have been logged for posterity.\nMaybe try respecting robots.txt next time? 😉")
+    })
+
+    // Handle 404s
+    http.HandleFunc("/wp-admin/", func(w http.ResponseWriter, r *http.Request) {
+        visitorLog.Add(r, "404")
+        http.NotFound(w, r)
     })
 
     // Handle index page
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/" {
+            if r.URL.Path != "/favicon.ico" {
+                visitorLog.Add(r, "404")
+            }
             http.NotFound(w, r)
             return
         }

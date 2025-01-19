@@ -32,9 +32,21 @@
         <h2>🤖 Hall of Shame 🤖</h2>
         <p>These visitors ignored robots.txt and found our hidden link. Naughty naughty!</p>
         {{range .Visitors}}
-        <div class="visitor">
-            [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}}, User-Agent: {{.UserAgent}}
-        </div>
+            {{if eq .Type "secret"}}
+            <div class="visitor">
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}}, User-Agent: {{.UserAgent}}
+            </div>
+            {{end}}
+        {{end}}
+
+        <h2>🔍 Vulnerability Probers 🔍</h2>
+        <p>These bots were looking for common vulnerabilities and misconfigured servers. Nice try!</p>
+        {{range .Visitors}}
+            {{if eq .Type "404"}}
+            <div class="visitor">
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}}, Path: {{.Path}}, User-Agent: {{.UserAgent}}
+            </div>
+            {{end}}
         {{end}}
     </div>
 </body>
