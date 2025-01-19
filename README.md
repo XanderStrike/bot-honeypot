@@ -1,6 +1,8 @@
-# 🤖 Bot Trap
+# 🤖 Bot Honeypot
 
-A tiny honeypot that catches misbehaving bots and web scrapers in the act. Because if you're going to ignore robots.txt, you might as well end up in our hall of shame.
+A tiny honeypot that catches misbehaving bots and web scrapers in the act.
+Because if you're going to ignore robots.txt, you might as well end up in our
+hall of shame.
 
 ## What it does
 
@@ -18,11 +20,13 @@ go run main.go
 
 Or with Docker:
 ```bash
-docker build -t bot-trap .
-docker run -p 8080:8080 bot-trap
+docker run -p 8080:8080 xanderstrike/bot-honeypot
 ```
 
 Then sit back and watch the bots stumble in.
+
+Hint: Put this on a domain and request a LetsEncrypt certificate, that seems to
+get the bots swarming.
 
 ## But why?
 
