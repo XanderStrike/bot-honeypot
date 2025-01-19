@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hidden Link Example</title>
+    <style>
+        .hidden-link {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Main Page</h1>
+    <p>This is a visible content.</p>
+    <a href="/secret-page" class="hidden-link">Hidden Link</a>
+</body>
+</html>
