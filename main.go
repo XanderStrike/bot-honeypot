@@ -75,16 +75,10 @@ func main() {
         fmt.Fprintf(w, "🚫 Gotcha! 🚫\n\nThis page was explicitly marked as off-limits in robots.txt.\nYour IP and User-Agent have been logged for posterity.\nMaybe try respecting robots.txt next time? 😉")
     })
 
-    // Handle 404s
-    http.HandleFunc("/wp-admin/", func(w http.ResponseWriter, r *http.Request) {
-        visitorLog.Add(r, "404")
-        http.NotFound(w, r)
-    })
-
-    // Handle index page
+    // Handle index page and catch all 404s
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/" {
-            if r.URL.Path != "/favicon.ico" {
+            if r.URL.Path != "/favicon.ico" && r.URL.Path != "/robots.txt" && r.URL.Path != "/secret-page" {
                 visitorLog.Add(r, "404")
             }
             http.NotFound(w, r)
