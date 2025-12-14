@@ -1,3 +1,4 @@
 User-agent: *
 Disallow: /secret-page
 Disallow: /javascript-trap
+Disallow: /forbidden-scan

@@ -51,7 +51,17 @@
         {{range .Visitors}}
             {{if eq .Type "secret"}}
             <div class="visitor">
-                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] User-Agent: {{.UserAgent}}
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}} | User-Agent: {{.UserAgent}}
+            </div>
+            {{end}}
+        {{end}}
+
+        <h2>🔍 Robots.txt Scanners 🔍</h2>
+        <p>These bots found the route that only exists in robots.txt. They're actively scanning forbidden content!</p>
+        {{range .Visitors}}
+            {{if eq .Type "forbidden"}}
+            <div class="visitor">
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}} | User-Agent: {{.UserAgent}}
             </div>
             {{end}}
         {{end}}
@@ -61,7 +71,7 @@
         {{range .Visitors}}
             {{if eq .Type "javascript"}}
             <div class="visitor">
-                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] User-Agent: {{.UserAgent}}
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}} | User-Agent: {{.UserAgent}}
             </div>
             {{end}}
         {{end}}
@@ -71,7 +81,7 @@
         {{range .Visitors}}
             {{if eq .Type "404"}}
             <div class="visitor">
-                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] Path: {{.Path}}, User-Agent: {{.UserAgent}}
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] IP: {{.IP}} | Path: {{.Path}}, User-Agent: {{.UserAgent}}
             </div>
             {{end}}
         {{end}}

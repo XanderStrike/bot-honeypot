@@ -4,7 +4,9 @@ import (
     "fmt"
     "html/template"
     "log"
+    "net"
     "net/http"
+    "strings"
     "sync"
     "time"
 )
@@ -15,6 +17,41 @@ type Visitor struct {
     Timestamp time.Time
     Path      string    // Add path to track what they tried to access
     Type      string    // "secret" or "404"
+}
+
+// getRealIP extracts the real client IP from various proxy headers
+func getRealIP(r *http.Request) string {
+    // Try common proxy headers in order of preference
+    headers := []string{
+        "CF-Connecting-IP",  // Cloudflare
+        "X-Forwarded-For",  // Common proxy header
+        "X-Real-IP",        // Common proxy header
+        "True-Client-IP",   // Cloudflare
+        "Forwarded",        // RFC 7239
+    }
+
+    for _, header := range headers {
+        if ip := r.Header.Get(header); ip != "" {
+            // X-Forwarded-For can contain multiple IPs, take the first one
+            if header == "X-Forwarded-For" {
+                parts := strings.Split(ip, ",")
+                if len(parts) > 0 {
+                    ip = strings.TrimSpace(parts[0])
+                }
+            }
+            // Validate the IP
+            if parsedIP := net.ParseIP(ip); parsedIP != nil {
+                return ip
+            }
+        }
+    }
+
+    // Fall back to RemoteAddr
+    ip, _, err := net.SplitHostPort(r.RemoteAddr)
+    if err != nil {
+        return r.RemoteAddr // fallback to full RemoteAddr if parsing fails
+    }
+    return ip
 }
 
 type VisitorLog struct {
@@ -35,7 +72,7 @@ func (vl *VisitorLog) Add(r *http.Request, visitorType string) {
     defer vl.mu.Unlock()
 
     vl.visitors[vl.current] = Visitor{
-        IP:        r.RemoteAddr,
+        IP:        getRealIP(r),
         UserAgent: r.UserAgent(),
         Timestamp: time.Now(),
         Path:      r.URL.Path,
@@ -69,6 +106,12 @@ func main() {
         http.ServeFile(w, r, "robots.txt")
     })
 
+    // Handle robots.txt only route
+    http.HandleFunc("/forbidden-scan", func(w http.ResponseWriter, r *http.Request) {
+        visitorLog.Add(r, "forbidden")
+        fmt.Fprintf(w, "🚨 Forbidden Area Detected! 🚨\n\nThis route only exists in robots.txt.\nYou're actively scanning forbidden content.\nYour IP and User-Agent have been logged. Naughty bot! 🤖")
+    })
+
     // Handle javascript trap page
     http.HandleFunc("/javascript-trap", func(w http.ResponseWriter, r *http.Request) {
         visitorLog.Add(r, "javascript")
@@ -84,7 +127,7 @@ func main() {
     // Handle index page and catch all 404s
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/" {
-            if r.URL.Path != "/favicon.ico" && r.URL.Path != "/robots.txt" && r.URL.Path != "/secret-page" && r.URL.Path != "/javascript-trap" {
+            if r.URL.Path != "/favicon.ico" && r.URL.Path != "/robots.txt" && r.URL.Path != "/secret-page" && r.URL.Path != "/javascript-trap" && r.URL.Path != "/forbidden-scan" {
                 visitorLog.Add(r, "404")
             }
             http.NotFound(w, r)
