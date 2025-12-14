@@ -40,12 +40,26 @@
     <p>This page contains a hidden link that only web scrapers and bots would find. It's explicitly marked as off-limits in robots.txt, which any well-behaved bot should respect. But some bots just can't help themselves...</p>
     <p><a href="https://github.com/XanderStrike/bot-honeypot">View source on GitHub</a></p>
     <a href="/secret-page" class="hidden-link" tabindex="-1">Hidden Link</a>
+    <script>
+    // This is a comment that contains a link: https://honeypot.astandke.com/javascript-trap
+    // Only bots scraping with regex would find: http://localhost:8080/javascript-trap
+    </script>
 
     <div class="visitor-list">
-        <h2>🤖 Hall of Shame 🤖</h2>
+        <h2>🤖 Naughty Robots 🤖</h2>
         <p>These visitors ignored robots.txt and found our hidden link. Naughty naughty!</p>
         {{range .Visitors}}
             {{if eq .Type "secret"}}
+            <div class="visitor">
+                [{{.Timestamp.Format "2006-01-02 15:04:05"}}] User-Agent: {{.UserAgent}}
+            </div>
+            {{end}}
+        {{end}}
+
+        <h2>🕷️ Silly Scrapers 🕷️</h2>
+        <p>These bots found the link hidden in JavaScript comments. They must be using regex to scrape links instead of semantically parsing HTML!</p>
+        {{range .Visitors}}
+            {{if eq .Type "javascript"}}
             <div class="visitor">
                 [{{.Timestamp.Format "2006-01-02 15:04:05"}}] User-Agent: {{.UserAgent}}
             </div>

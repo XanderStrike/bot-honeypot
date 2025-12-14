@@ -69,6 +69,12 @@ func main() {
         http.ServeFile(w, r, "robots.txt")
     })
 
+    // Handle javascript trap page
+    http.HandleFunc("/javascript-trap", func(w http.ResponseWriter, r *http.Request) {
+        visitorLog.Add(r, "javascript")
+        fmt.Fprintf(w, "🕷️ Caught in the JavaScript Trap! 🕷️\n\nThis link was hidden in a JavaScript comment.\nOnly bots scraping with regex would find it.\nYour IP and User-Agent have been logged. Nice try, bot! 🤖")
+    })
+
     // Handle secret page
     http.HandleFunc("/secret-page", func(w http.ResponseWriter, r *http.Request) {
         visitorLog.Add(r, "secret")
@@ -78,7 +84,7 @@ func main() {
     // Handle index page and catch all 404s
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.URL.Path != "/" {
-            if r.URL.Path != "/favicon.ico" && r.URL.Path != "/robots.txt" && r.URL.Path != "/secret-page" {
+            if r.URL.Path != "/favicon.ico" && r.URL.Path != "/robots.txt" && r.URL.Path != "/secret-page" && r.URL.Path != "/javascript-trap" {
                 visitorLog.Add(r, "404")
             }
             http.NotFound(w, r)
