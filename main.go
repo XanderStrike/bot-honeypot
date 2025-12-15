@@ -56,7 +56,11 @@ func getRealIP(r *http.Request) string {
     return ip
 }
 
-const visitorLogFile = "visitors.json"
+const (
+    visitorLogFile   = "visitors.json"
+    maxLogSize       = 100 * 1024 * 1024 // 100MB
+    maxVisitors      = 10000           // Maximum number of visitors to keep
+)
 
 type VisitorLog struct {
     mu       sync.Mutex
@@ -85,6 +89,11 @@ func (vl *VisitorLog) loadVisitors() ([]Visitor, error) {
         return nil, err
     }
 
+    // Apply size limits even when loading
+    if len(visitors) > maxVisitors {
+        visitors = visitors[len(visitors)-maxVisitors:]
+    }
+
     return visitors, nil
 }
 
@@ -92,9 +101,47 @@ func (vl *VisitorLog) saveVisitors(visitors []Visitor) error {
     vl.mu.Lock()
     defer vl.mu.Unlock()
 
+    // Trim visitors if we have too many
+    if len(visitors) > maxVisitors {
+        log.Printf("Trimming visitor log from %d to %d entries", len(visitors), maxVisitors)
+        // Keep the most recent visitors (last maxVisitors entries)
+        visitors = visitors[len(visitors)-maxVisitors:]
+    }
+
     data, err := json.MarshalIndent(visitors, "", "  ")
     if err != nil {
         return err
+    }
+
+    // Check if the file would exceed the size limit
+    if len(data) > maxLogSize {
+        log.Printf("Visitor log size %d bytes exceeds maximum %d bytes, trimming data", len(data), maxLogSize)
+        // If the data is too large even with trimming, we need to reduce further
+        // This could happen if individual visitor entries are very large
+        // Let's try to keep at least some data by reducing the number of visitors
+        for len(data) > maxLogSize && len(visitors) > 100 {
+            // Reduce by 10% each time
+            keepCount := int(float64(len(visitors)) * 0.9)
+            if keepCount < 100 {
+                keepCount = 100
+            }
+            log.Printf("Reducing visitor count from %d to %d to fit size limit", len(visitors), keepCount)
+            visitors = visitors[len(visitors)-keepCount:]
+            data, err = json.MarshalIndent(visitors, "", "  ")
+            if err != nil {
+                return err
+            }
+        }
+        
+        // If we still can't fit, just keep the most recent 100 visitors
+        if len(data) > maxLogSize {
+            log.Printf("Final reduction: keeping only 100 most recent visitors")
+            visitors = visitors[len(visitors)-100:]
+            data, err = json.MarshalIndent(visitors, "", "  ")
+            if err != nil {
+                return err
+            }
+        }
     }
 
     return os.WriteFile(visitorLogFile, data, 0644)
