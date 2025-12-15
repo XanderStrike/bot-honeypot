@@ -1,16 +1,15 @@
-# 🤖 Bot Honeypot
+# Bot Honeypot
 
 A tiny honeypot that catches misbehaving bots and web scrapers in the act.
-Because if you're going to ignore robots.txt, you might as well end up in our
-hall of shame.
 
 ## What it does
 
-1. Presents a perfectly normal webpage
-2. ...with an invisible link that only bots would find
-3. ...which is explicitly marked as off-limits in robots.txt
-4. Keeps a running tally of naughty visitors
-5. Also tracks vulnerability probing attempts, because why not?
+Presents a set of traps for automated web agents:
+
+* An invisible link to a route disallowed in robots.txt
+* A route only present in a javascript comment
+* A route only present in the robots.txt, where it's disallowed 
+* Logging for 404s, showing vulnerability probers
 
 ## Running
 
@@ -23,11 +22,7 @@ Or with Docker:
 docker run -p 8080:8080 xanderstrike/bot-honeypot
 ```
 
-Then sit back and watch the bots stumble in.
+Then visit http://localhost:8080 to see caught bots in real-time.
 
-Hint: Put this on a domain and request a LetsEncrypt certificate, that seems to
-get the bots swarming.
+Hint: Put this behind a domain and then get a letsencrypt cert for it.
 
-## But why?
-
-Because sometimes you just want to watch the web crawl. 🕷️
