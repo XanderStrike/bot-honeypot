@@ -1,11 +1,13 @@
 package main
 
 import (
+    "encoding/json"
     "fmt"
     "html/template"
     "log"
     "net"
     "net/http"
+    "os"
     "strings"
     "sync"
     "time"
@@ -54,51 +56,83 @@ func getRealIP(r *http.Request) string {
     return ip
 }
 
+const visitorLogFile = "visitors.json"
+
 type VisitorLog struct {
-    visitors []Visitor
-    current  int
     mu       sync.Mutex
 }
 
-func NewVisitorLog(size int) *VisitorLog {
-    return &VisitorLog{
-        visitors: make([]Visitor, size),
-        current:  0,
-    }
+func NewVisitorLog() *VisitorLog {
+    return &VisitorLog{}
 }
 
-func (vl *VisitorLog) Add(r *http.Request, visitorType string) {
+func (vl *VisitorLog) loadVisitors() ([]Visitor, error) {
     vl.mu.Lock()
     defer vl.mu.Unlock()
 
-    vl.visitors[vl.current] = Visitor{
+    // Try to read existing file
+    data, err := os.ReadFile(visitorLogFile)
+    if err != nil {
+        if os.IsNotExist(err) {
+            // File doesn't exist, return empty slice
+            return []Visitor{}, nil
+        }
+        return nil, err
+    }
+
+    var visitors []Visitor
+    if err := json.Unmarshal(data, &visitors); err != nil {
+        return nil, err
+    }
+
+    return visitors, nil
+}
+
+func (vl *VisitorLog) saveVisitors(visitors []Visitor) error {
+    vl.mu.Lock()
+    defer vl.mu.Unlock()
+
+    data, err := json.MarshalIndent(visitors, "", "  ")
+    if err != nil {
+        return err
+    }
+
+    return os.WriteFile(visitorLogFile, data, 0644)
+}
+
+func (vl *VisitorLog) Add(r *http.Request, visitorType string) {
+    visitors, err := vl.loadVisitors()
+    if err != nil {
+        log.Printf("Error loading visitors: %v", err)
+        return
+    }
+
+    // Add new visitor
+    visitors = append(visitors, Visitor{
         IP:        getRealIP(r),
         UserAgent: r.UserAgent(),
         Timestamp: time.Now(),
         Path:      r.URL.Path,
         Type:      visitorType,
+    })
+
+    // Save updated visitors
+    if err := vl.saveVisitors(visitors); err != nil {
+        log.Printf("Error saving visitors: %v", err)
     }
-    vl.current = (vl.current + 1) % len(vl.visitors)
 }
 
 func (vl *VisitorLog) GetAll() []Visitor {
-    vl.mu.Lock()
-    defer vl.mu.Unlock()
-
-    // Create a sorted list starting from the oldest entry
-    result := make([]Visitor, 0, len(vl.visitors))
-    start := vl.current
-    for i := 0; i < len(vl.visitors); i++ {
-        idx := (start + i) % len(vl.visitors)
-        if !vl.visitors[idx].Timestamp.IsZero() {
-            result = append(result, vl.visitors[idx])
-        }
+    visitors, err := vl.loadVisitors()
+    if err != nil {
+        log.Printf("Error loading visitors: %v", err)
+        return []Visitor{}
     }
-    return result
+    return visitors
 }
 
 func main() {
-    visitorLog := NewVisitorLog(100)
+    visitorLog := NewVisitorLog()
     
     // Handle robots.txt specifically
     http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
